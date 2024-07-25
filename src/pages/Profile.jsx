@@ -130,7 +130,7 @@ const Profile = ({ user, updateUser }) => {
       const { data: { user: updatedUser }, error: fetchError } = await supabase.auth.getUser();
       if (fetchError) throw fetchError;
   
-      console.log('Updated user:', updatedUser); // Log untuk debugging
+      // console.log('Updated user:', updatedUser); 
   
       updateUser(updatedUser);
   

@@ -153,7 +153,7 @@ const BookingTime = () => {
         console.error('Error inserting booking:', error);
         throw error;
       } else {
-        console.log('Booking inserted successfully:', data);
+        // console.log('Booking inserted successfully:', data);
         
         Swal.fire({
           icon: 'success',

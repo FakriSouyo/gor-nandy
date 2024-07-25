@@ -81,7 +81,7 @@ function App() {
   };
 
   const handleLogin = (userData) => {
-    console.log("Login handled in App.js", userData);
+    // console.log("Login handled in App.js", userData);
     setIsLoggedIn(true);
     setUser(userData);
     localStorage.setItem('isAdmin', userData.is_admin);
@@ -94,11 +94,11 @@ function App() {
     setIsLoggedIn(false);
     setUser(null);
     setLoading(false);
-    window.location.href = '/'; // Navigasi ke halaman utama setelah logout
+    window.location.href = '/'; 
   };
 
   const updateUser = (updatedUser) => {
-    console.log('Updating user in App.js:', updatedUser); // Log untuk debugging
+
     setUser({
       ...updatedUser,
       is_admin: updatedUser.user_metadata.is_admin || updatedUser.is_admin
