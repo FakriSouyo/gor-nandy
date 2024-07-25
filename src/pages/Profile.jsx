@@ -30,7 +30,7 @@ const Profile = ({ user, updateUser }) => {
   }, [user, isAdmin]);
 
   useEffect(() => {
-    console.log('Current user:', user); // Log untuk debugging
+    // console.log('Current user:', user); // Log untuk debugging
   }, [user]);
 
   useEffect(() => {
