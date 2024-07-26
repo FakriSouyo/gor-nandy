@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import moment from 'moment';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addHours, isSameDay, isWithinInterval } from 'date-fns';
+import { id } from 'date-fns/locale';
 import { supabase } from '../services/supabaseClient';
 import Swal from 'sweetalert2';
+import { FaCalendarAlt, FaClock, FaMoneyBillWave, FaMapMarkerAlt } from 'react-icons/fa';
 
 const BookingTime = () => {
   const { courtId } = useParams();
   const navigate = useNavigate();
-  const [currentWeek, setCurrentWeek] = useState(moment());
+  const [currentWeek, setCurrentWeek] = useState(new Date());
   const [bookings, setBookings] = useState([]);
   const [selection, setSelection] = useState(null);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -20,12 +22,15 @@ const BookingTime = () => {
   }, [currentWeek, courtId]);
 
   const fetchBookings = async () => {
+    const startDate = startOfWeek(currentWeek, { weekStartsOn: 1 });
+    const endDate = endOfWeek(currentWeek, { weekStartsOn: 1 });
+    
     const { data, error } = await supabase
       .from('bookings')
       .select('*')
       .eq('court_id', courtId)
-      .gte('date', currentWeek.clone().startOf('week').format('YYYY-MM-DD'))
-      .lt('date', currentWeek.clone().endOf('week').format('YYYY-MM-DD'));
+      .gte('date', format(startDate, 'yyyy-MM-dd'))
+      .lt('date', format(endDate, 'yyyy-MM-dd'));
 
     if (error) {
       console.error('Error fetching bookings:', error.message);
@@ -49,15 +54,11 @@ const BookingTime = () => {
   };
 
   const generateTimeSlots = () => {
-    const slots = [];
-    for (let i = 10; i < 22; i++) {
-      slots.push(`${i}:00`);
-    }
-    return slots;
+    return Array.from({ length: 12 }, (_, i) => format(addHours(new Date().setHours(10, 0, 0, 0), i), 'HH:mm'));
   };
 
   const handleSelectionStart = (day, time) => {
-    setSelection({ start: { day, time }, end: { day, time } });
+    setSelection({ start: new Date(day.setHours(...time.split(':'))), end: new Date(day.setHours(...time.split(':'))) });
     setIsSelecting(true);
   };
 
@@ -65,7 +66,7 @@ const BookingTime = () => {
     if (isSelecting) {
       setSelection(prev => ({
         ...prev,
-        end: { day, time }
+        end: new Date(day.setHours(...time.split(':')))
       }));
     }
   };
@@ -76,26 +77,21 @@ const BookingTime = () => {
 
   const isSlotSelected = (day, time) => {
     if (!selection) return false;
-    const slotTime = moment(`${day.format('YYYY-MM-DD')} ${time}`);
-    const startTime = moment(`${selection.start.day.format('YYYY-MM-DD')} ${selection.start.time}`);
-    const endTime = moment(`${selection.end.day.format('YYYY-MM-DD')} ${selection.end.time}`).add(1, 'hour');
-    return slotTime.isBetween(startTime, endTime, null, '[)');
+    const slotTime = new Date(day.setHours(...time.split(':')));
+    return isWithinInterval(slotTime, { start: selection.start, end: addHours(selection.end, 1) });
   };
 
   const calculateBookingDetails = () => {
     if (!selection || !courtDetails) return null;
 
-    const startTime = moment(`${selection.start.day.format('YYYY-MM-DD')} ${selection.start.time}`);
-    const endTime = moment(`${selection.end.day.format('YYYY-MM-DD')} ${selection.end.time}`).add(1, 'hour');
-    const duration = moment.duration(endTime.diff(startTime));
-    const hours = duration.asHours();
-    const price = hours * courtDetails.price;
+    const duration = (selection.end - selection.start) / (1000 * 60 * 60) + 1;
+    const price = duration * courtDetails.price;
 
     return {
-      start: startTime,
-      end: endTime,
-      duration: hours,
-      price: price,
+      start: selection.start,
+      end: addHours(selection.end, 1),
+      duration,
+      price,
       court_id: courtId,
     };
   };
@@ -104,13 +100,13 @@ const BookingTime = () => {
     const bookingDetails = calculateBookingDetails();
     if (!bookingDetails) return null;
   
-    const slotTime = moment(`${day.format('YYYY-MM-DD')} ${time}`);
-    const isStart = slotTime.isSame(bookingDetails.start);
+    const slotTime = new Date(day.setHours(...time.split(':')));
+    const isStart = isSameDay(slotTime, bookingDetails.start) && format(slotTime, 'HH:mm') === format(bookingDetails.start, 'HH:mm');
   
     if (isStart) {
       return (
         <div className="text-xs">
-          <div>Mulai: {bookingDetails.start.format('HH:mm')}</div>
+          <div>Mulai: {format(bookingDetails.start, 'HH:mm')}</div>
           <div>Durasi: {bookingDetails.duration} jam</div>
           <div>Total: Rp {bookingDetails.price.toLocaleString()}</div>
         </div>
@@ -125,7 +121,6 @@ const BookingTime = () => {
   
     setIsSubmitting(true);
     try {
-      // Dapatkan user saat ini
       const { data: { user } } = await supabase.auth.getUser();
   
       if (!user) throw new Error('User not authenticated');
@@ -133,10 +128,10 @@ const BookingTime = () => {
       const bookingData = {
         user_id: user.id,
         court_id: courtId,
-        date: bookingDetails.start.format('YYYY-MM-DD'),
-        time: bookingDetails.start.format('HH:mm:ss'),
-        start_time: bookingDetails.start.format('HH:mm:ss'),
-        end_time: bookingDetails.end.format('HH:mm:ss'),
+        date: format(bookingDetails.start, 'yyyy-MM-dd'),
+        time: format(bookingDetails.start, 'HH:mm:ss'),
+        start_time: format(bookingDetails.start, 'HH:mm:ss'),
+        end_time: format(bookingDetails.end, 'HH:mm:ss'),
         duration: bookingDetails.duration,
         price: bookingDetails.price,
         status: 'pending',
@@ -153,14 +148,11 @@ const BookingTime = () => {
         console.error('Error inserting booking:', error);
         throw error;
       } else {
-        // console.log('Booking inserted successfully:', data);
-        
         Swal.fire({
           icon: 'success',
           title: 'Booking Submitted',
           text: 'Your booking has been submitted successfully.',
         }).then(() => {
-          // Arahkan ke halaman konfirmasi pembayaran setelah user menekan OK
           navigate('/booking-confirmation', { state: { bookingId: data.id } });
         });
       }
@@ -175,118 +167,108 @@ const BookingTime = () => {
       setIsSubmitting(false);
     }
   };
-  const renderWeek = () => {
-    const days = [];
-    const startOfWeek = currentWeek.clone().startOf('week');
 
-    for (let i = 0; i < 7; i++) {
-      const day = startOfWeek.clone().add(i, 'days');
-      days.push(day);
-    }
+  const renderWeek = () => {
+    const startDate = startOfWeek(currentWeek, { weekStartsOn: 1 });
+    const endDate = endOfWeek(currentWeek, { weekStartsOn: 1 });
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
 
     return (
-      <table className="w-full border-collapse select-none">
-        <thead>
-          <tr>
-            <th className="border p-2"></th>
-            {days.map(day => (
-              <th key={day.format('YYYY-MM-DD')} className="border p-2">
-                {day.format('ddd M/D')}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {generateTimeSlots().map(time => (
-            <tr key={time}>
-              <td className="border p-2">{time}</td>
-              {days.map(day => {
-                const isBooked = bookings.some(
-                  booking => moment(booking.date).isSame(day, 'day') && booking.start_time === time
-                );
-                const isSelected = isSlotSelected(day, time);
-                return (
-                  <td
-                  key={`${day.format('YYYY-MM-DD')}-${time}`}
-                  className={`border p-2 ${
-                    isBooked ? 'bg-red-100 cursor-not-allowed' : 
-                    isSelected ? 'bg-green-100' : 'hover:bg-gray-100'
-                  }`}
-                  onMouseDown={() => !isBooked && handleSelectionStart(day, time)}
-                  onMouseEnter={() => !isBooked && handleSelectionMove(day, time)}
-                  onMouseUp={handleSelectionEnd}
-                >
-                  {isBooked && <div className="text-xs pointer-events-none">Booked</div>}
-                  {isSelected && renderBookingDetails(day, time)}
-                </td>
-                );
-              })}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse select-none bg-white rounded-lg shadow-lg">
+          <thead>
+            <tr className="bg-green-500 text-white">
+              <th className="border p-2 sticky left-0 bg-green-500 z-10"></th>
+              {days.map(day => (
+                <th key={format(day, 'yyyy-MM-dd')} className="border p-2">
+                  <div className="font-bold">{format(day, 'EEE', { locale: id })}</div>
+                  <div>{format(day, 'd MMM', { locale: id })}</div>
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {generateTimeSlots().map(time => (
+              <tr key={time}>
+                <td className="border p-2 sticky left-0 bg-white z-10 font-semibold">{time}</td>
+                {days.map(day => {
+                  const isBooked = bookings.some(
+                    booking => isSameDay(new Date(booking.date), day) && booking.start_time === time
+                  );
+                  const isSelected = isSlotSelected(day, time);
+                  return (
+                    <td
+                      key={`${format(day, 'yyyy-MM-dd')}-${time}`}
+                      className={`border p-2 ${
+                        isBooked ? 'bg-red-100 cursor-not-allowed' : 
+                        isSelected ? 'bg-green-100' : 'hover:bg-gray-100'
+                      } transition-all duration-200`}
+                      onMouseDown={() => !isBooked && handleSelectionStart(day, time)}
+                      onMouseEnter={() => !isBooked && handleSelectionMove(day, time)}
+                      onMouseUp={handleSelectionEnd}
+                    >
+                      {isBooked && <div className="text-xs text-red-600 font-semibold pointer-events-none">Booked</div>}
+                      {isSelected && renderBookingDetails(day, time)}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     );
   };
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-100 min-h-screen">
-      <h1 className="text-4xl  mb-6 text-center leading-tight font-modak text-green-700 ">Pilih Waktu Pemesanan</h1>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl">{currentWeek.format('MMM D') + ' - ' + currentWeek.clone().endOf('week').format('D, YYYY')}</h2>
+      <h1 className="text-5xl mb-8 text-center leading-tight font-modak text-green-700 shadow-text">Pilih Waktu Pemesanan</h1>
+      <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold text-green-700">
+          {format(startOfWeek(currentWeek, { weekStartsOn: 1 }), "d MMMM", { locale: id })} - {format(endOfWeek(currentWeek, { weekStartsOn: 1 }), "d MMMM yyyy", { locale: id })}
+        </h2>
         <div>
-          <button className="px-4 font-inter bg-green-500 font-semibold py-2 text-white  mr-2" onClick={() => setCurrentWeek(moment())}>Today</button>
-          <button className="px-4 py-2 bg-green-500 text-white font-bold mr-2" onClick={() => setCurrentWeek(prev => prev.clone().subtract(1, 'week'))}>&lt;</button>
-          <button className="px-4 py-2 bg-green-500 text-white font-bold mr-2" onClick={() => setCurrentWeek(prev => prev.clone().add(1, 'week'))}>&gt;</button>
+          <button className="px-4 font-inter bg-green-500 font-semibold py-2 text-white rounded-l-lg hover:bg-green-600 transition-colors duration-200" onClick={() => setCurrentWeek(new Date())}>Hari Ini</button>
+          <button className="px-4 py-2 bg-green-500 text-white font-bold hover:bg-green-600 transition-colors duration-200" onClick={() => setCurrentWeek(date => addDays(date, -7))}>&lt;</button>
+          <button className="px-4 py-2 bg-green-500 text-white font-bold rounded-r-lg hover:bg-green-600 transition-colors duration-200" onClick={() => setCurrentWeek(date => addDays(date, 7))}>&gt;</button>
         </div>
       </div>
       {renderWeek()}
       {calculateBookingDetails() && (
-        <div className="mt-4 p-4 border rounded font-inter font-semibold text-white bg-green-500 shadow-lg">
-        <h3 className="font-bold text-lg mb-2">Booking Details:</h3>
-        <table className="w-full text-left">
-          <tbody>
-            <tr className="border-b border-green-700">
-              <td className="py-2 pr-4">Lapangan:</td>
-              <td className="py-2">{courtDetails?.name}</td>
-            </tr>
-            <tr className="border-b border-green-700">
-              <td className="py-2 pr-4">Alamat:</td>
-              <td className="py-2">{courtDetails?.address}</td>
-            </tr>
-            <tr className="border-b border-green-700">
-              <td className="py-2 pr-4">Tanggal:</td>
-              <td className="py-2">{calculateBookingDetails().start.format('DD/MM/YYYY')}</td>
-            </tr>
-            <tr className="border-b border-green-700">
-              <td className="py-2 pr-4">Waktu:</td>
-              <td className="py-2">{calculateBookingDetails().start.format('HH:mm')} - {calculateBookingDetails().end.format('HH:mm')}</td>
-            </tr>
-            <tr className="border-b border-green-700">
-              <td className="py-2 pr-4">Durasi:</td>
-              <td className="py-2">{calculateBookingDetails().duration} jam</td>
-            </tr>
-            <tr className="border-b border-green-700">
-              <td className="py-2 pr-4">Harga per jam:</td>
-              <td className="py-2">Rp {courtDetails?.price.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td className="py-2 pr-4">Total Harga:</td>
-              <td className="py-2">Rp {calculateBookingDetails().price.toLocaleString()}</td>
-            </tr>
-          </tbody>
-        </table>
-        <button
-          className="mt-4 bg-green-200 font-bold text-green-900 px-4 py-2 rounded hover:bg-green-600 disabled:bg-gray-400"
-          onClick={handleBookingSubmission}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Memproses...' : 'Pesan Sekarang'}
-        </button>
-      </div>
-      
+        <div className="mt-6 p-6 border rounded-lg font-inter font-semibold text-gray-800 bg-white shadow-lg">
+          <h3 className="font-bold text-2xl mb-4 text-green-700">Ringkasan Pemesanan</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="flex items-center mb-2"><FaMapMarkerAlt className="mr-2 text-green-500" /> Lapangan: {courtDetails?.name}</p>
+              <p className="flex items-center mb-2"><FaMapMarkerAlt className="mr-2 text-green-500" /> Alamat: {courtDetails?.address}</p>
+              <p className="flex items-center mb-2">
+                <FaCalendarAlt className="mr-2 text-green-500" /> 
+                Tanggal: {format(calculateBookingDetails().start, "EEEE, d MMMM yyyy", { locale: id })}
+              </p>
+              <p className="flex items-center mb-2">
+                <FaClock className="mr-2 text-green-500" /> 
+                Waktu: {format(calculateBookingDetails().start, "HH:mm")} - {format(calculateBookingDetails().end, "HH:mm")}
+              </p>
+            </div>
+            <div>
+              <p className="flex items-center mb-2"><FaClock className="mr-2 text-green-500" /> Durasi: {calculateBookingDetails().duration} jam</p>
+              <p className="flex items-center mb-2"><FaMoneyBillWave className="mr-2 text-green-500" /> Harga per jam: Rp {courtDetails?.price.toLocaleString()}</p>
+              <p className="flex items-center mb-2 text-xl font-bold text-green-700">
+                <FaMoneyBillWave className="mr-2 text-green-500" /> Total Harga: Rp {calculateBookingDetails().price.toLocaleString()}
+              </p>
+            </div>
+          </div>
+          <button
+            className="mt-6 bg-green-500 font-bold text-white px-6 py-3 rounded-lg hover:bg-green-600 disabled:bg-gray-400 transition-colors duration-200 w-full md:w-auto"
+            onClick={handleBookingSubmission}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Memproses...' : 'Pesan Sekarang'}
+          </button>
+        </div>
       )}
     </div>
   );
 };
 
-export default BookingTime;
+export default BookingTime; 
