@@ -17,14 +17,14 @@ const Navbar = ({ openModal, isLoggedIn, handleLogout, user }) => {
     const handleScroll = () => {
       const scrolled = window.scrollY > 50;
       setIsScrolled(scrolled);
-  
+
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-  
-      // Tampilkan tombol scroll-to-top saat user berada di bagian bawah halaman
+
       setShowScrollToTop(
-        scrollTop + windowHeight >= documentHeight - 2800
+        documentHeight > windowHeight && 
+        scrollTop > 0 
       );
     };
 

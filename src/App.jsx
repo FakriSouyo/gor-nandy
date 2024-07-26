@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Schedule from './pages/Schedule';
 import About from './pages/About';
@@ -13,6 +13,7 @@ import { supabase } from './services/supabaseClient';
 import BookingTime from './pages/BookingTime';
 import BookingConfirmation from './components/BookingConfirmation';
 import AdminDashboard from './components/admin/AdminDashboard';
+import NotFound from './pages/NotFound';
 
 function App() {
   const [authModal, setAuthModal] = useState({ isOpen: false, mode: 'login' });
@@ -132,6 +133,8 @@ function App() {
               : <Navigate to="/" replace />
           } 
         />
+       
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <AuthModal 
         isOpen={authModal.isOpen} 
