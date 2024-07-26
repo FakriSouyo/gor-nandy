@@ -44,7 +44,7 @@ const Schedule = () => {
     }
   };
 
-  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
   const hours = Array.from({ length: 12 }, (_, i) => i + 10); // 10:00 to 21:00
 
   const getWeekDates = () => {
@@ -78,13 +78,13 @@ const Schedule = () => {
       transition={{ duration: 0.8 }}
     >
       <motion.div 
-        className="bg-opacity-90 p-6 pl-5 rounded-lg shadow-lg w-full max-w-6xl mx-auto"
+        className="bg-opacity-90 p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-6xl mx-auto"
         initial={{ y: 50, opacity: 0 }}
         animate={isInView ? { y: 0, opacity: 1 } : { y: 50, opacity: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
       >
         <motion.h2 
-          className="font-modak text-6xl text-center text-white leading-tight mb-6"
+          className="font-modak text-4xl sm:text-6xl text-center text-white leading-tight mb-6"
           initial={{ y: -20, opacity: 0 }}
           animate={isInView ? { y: 0, opacity: 1 } : { y: -20, opacity: 0 }}
           transition={{ delay: 0.4, duration: 0.8 }}
@@ -99,36 +99,39 @@ const Schedule = () => {
             animate={isInView ? { y: 0, opacity: 1 } : { y: 50, opacity: 0 }}
             transition={{ delay: 0.2 * (index + 1), duration: 0.8 }}
           >
-            <h3 className="text-2xl font-bold text-white mb-4">{court.name}</h3>
-            <div className="grid grid-cols-8 gap-1 text-white">
-              <div></div>
-              {weekDates.map((date, index) => (
-                <div key={index} className="text-center font-bold">
-                  {days[date.day()]}<br/>{date.format('DD/MM')}
-                </div>
-              ))}
-              {hours.map(hour => (
-                <React.Fragment key={hour}>
-                  <div className="text-right pr-2">{hour}:00</div>
-                  {weekDates.map((date, index) => {
-                    const status = getScheduleStatus(hour, date, court.id);
-                    return (
-                      <div 
-                        key={index} 
-                        className={`border p-2 h-16 rounded-md
-                          ${currentDate.hour() === hour && currentDate.isSame(date, 'day') ? 'bg-yellow-100' : 
-                            status === 'booked' ? 'bg-red-300' : 'bg-green-300'} 
-                          bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-20 border border-gray-100`}
-                      >
-                        <div className="text-xs text-white font-semibold flex justify-center items-center h-full">
-                          <span className="hidden sm:block">{status === 'booked' ? 'Terbooking' : 'Tersedia'}</span>
-                          <span className="sm:hidden">{status === 'booked' ? <FaTimes /> : <FaCheck />}</span>
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">{court.name}</h3>
+            <div className="overflow-x-auto">
+              <div className="grid grid-cols-8 gap-1 text-white min-w-[640px]">
+                <div></div>
+                {weekDates.map((date, index) => (
+                  <div key={index} className="text-center font-bold text-xs sm:text-sm">
+                    <span className="hidden sm:inline">{days[date.day()]}<br/></span>
+                    <span className="sm:hidden">{days[date.day()]}</span>
+                    {date.format('DD/MM')}
+                  </div>
+                ))}
+                {hours.map(hour => (
+                  <React.Fragment key={hour}>
+                    <div className="text-right pr-2 text-xs sm:text-sm">{hour}:00</div>
+                    {weekDates.map((date, index) => {
+                      const status = getScheduleStatus(hour, date, court.id);
+                      return (
+                        <div 
+                          key={index} 
+                          className={`border p-1 sm:p-2 h-8 sm:h-16 rounded-md
+                            ${currentDate.hour() === hour && currentDate.isSame(date, 'day') ? 'bg-yellow-100' : 
+                              status === 'booked' ? 'bg-red-300' : 'bg-green-300'} 
+                            bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-20 border border-gray-100`}
+                        >
+                          <div className="text-xs text-white font-semibold flex justify-center items-center h-full">
+                            {status === 'booked' ? <FaTimes /> : <FaCheck />}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
+                      );
+                    })}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
           </motion.div>
         ))}

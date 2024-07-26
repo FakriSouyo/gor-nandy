@@ -132,8 +132,8 @@ const PaymentConfirmation = () => {
         <p>Tidak ada pembayaran yang menunggu konfirmasi.</p>
       ) : (
         payments.map(payment => (
-          <div key={payment.id} className="bg-white shadow-md rounded-lg p-6">
-            <div className="grid md:grid-cols-2 gap-4">
+          <div key={payment.id} className="bg-white shadow-md rounded-lg p-4  sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <h3 className="text-lg font-semibold mb-2">{payment.users?.name || 'Unknown'}</h3>
                 <p className="text-gray-600">Email: {payment.users?.email}</p>
@@ -145,27 +145,29 @@ const PaymentConfirmation = () => {
                 <p className="text-gray-600">Waktu: {moment(payment.start_time, 'HH:mm:ss').format('HH:mm')} - {moment(payment.end_time, 'HH:mm:ss').format('HH:mm')}</p>
               </div>
             </div>
-            <div className="mt-4 flex space-x-4">
-              <button
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md flex items-center"
-                onClick={() => viewPaymentProof(payment)}
-              >
-                <FaImage className="mr-2" /> Bukti Pembayaran
-              </button>
-              <button
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md flex items-center"
-                onClick={() => confirmPayment(payment)}
-              >
-                <FaCheck className="mr-2" /> Konfirmasi Pembayaran
-              </button>
-              <button
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center"
-                onClick={() => cancelBooking(payment)}
-              >
-                <FaTimes className="mr-2" /> Batalkan Booking
-              </button>
-            </div>
-          </div>
+  <div className="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+    <button
+      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md flex items-center justify-center"
+      onClick={() => viewPaymentProof(payment)}
+    >
+      <FaImage className="mr-2" /> Bukti Pembayaran
+    </button>
+    <button
+      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md flex items-center justify-center"
+      onClick={() => confirmPayment(payment)}
+    >
+      <FaCheck className="mr-2" /> Konfirmasi Pembayaran
+    </button>
+    <button
+      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center justify-center"
+      onClick={() => cancelBooking(payment)}
+    >
+      <FaTimes className="mr-2" /> Batalkan Booking
+    </button>
+  </div>
+</div>
+
+
         ))
       )}
     </div>

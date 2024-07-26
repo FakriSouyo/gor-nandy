@@ -1,4 +1,3 @@
-// src/components/admin/TransactionHistory.jsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import moment from 'moment';
@@ -30,8 +29,6 @@ const TransactionHistory = () => {
     
       if (error) throw error;
       
-      // console.log('Received transactions:', data);
-      
       setTransactions(data);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -50,14 +47,10 @@ const TransactionHistory = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'confirmed':
-        return 'text-green-600';
-      case 'pending':
-        return 'text-yellow-600';
-      case 'cancelled':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
+      case 'confirmed': return 'text-green-600';
+      case 'pending': return 'text-yellow-600';
+      case 'cancelled': return 'text-red-600';
+      default: return 'text-gray-600';
     }
   };
 
@@ -78,7 +71,7 @@ const TransactionHistory = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       <div className="flex items-center bg-white shadow-md rounded-lg p-4">
         <FaSearch className="text-gray-400 mr-2" />
         <input
@@ -96,71 +89,61 @@ const TransactionHistory = () => {
         <div className="text-center text-red-500">{error}</div>
       ) : (
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID Transaksi
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Pengguna
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Lapangan
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tanggal & Waktu
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTransactions.map((transaction) => (
-                <tr key={transaction.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {transaction.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {transaction.users?.name || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {transaction.courts?.name || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {transaction.date ? moment(transaction.date).format('DD/MM/YYYY') : 'N/A'} 
-                    {transaction.start_time ? transaction.start_time.slice(0, 5) : ''} - 
-                    {transaction.end_time ? transaction.end_time.slice(0, 5) : ''}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`font-medium ${getStatusColor(transaction.status)}`}>
-                      {transaction.status ? (transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)) : 'N/A'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {transaction.total_price != null 
-                      ? `Rp ${transaction.total_price.toLocaleString()}`
-                      : 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <button
-                      onClick={() => viewPaymentProof(transaction.payment_proof)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      <FaEye className="inline mr-1" /> Detail
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pengguna</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lapangan</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal & Waktu</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredTransactions.map((transaction) => (
+                  <tr key={transaction.id}>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
+                      {transaction.id}
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                      {transaction.users?.name || 'N/A'}
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                      {transaction.courts?.name || 'N/A'}
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                      {transaction.date ? moment(transaction.date).format('DD/MM/YY') : 'N/A'} 
+                      <br className="sm:hidden" />
+                      <span className="hidden sm:inline"> </span>
+                      {transaction.start_time ? transaction.start_time.slice(0, 5) : ''} - 
+                      {transaction.end_time ? transaction.end_time.slice(0, 5) : ''}
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm">
+                      <span className={`font-medium ${getStatusColor(transaction.status)}`}>
+                        {transaction.status ? (transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)) : 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                      {transaction.total_price != null 
+                        ? `Rp ${transaction.total_price.toLocaleString()}`
+                        : 'N/A'}
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                      <button
+                        onClick={() => viewPaymentProof(transaction.payment_proof)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <FaEye className="inline mr-1" /> Detail
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
