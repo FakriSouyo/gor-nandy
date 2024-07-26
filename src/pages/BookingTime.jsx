@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addHours, isSameDay, isWithinInterval } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addHours, isSameDay, isWithinInterval, addDays } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { supabase } from '../services/supabaseClient';
 import Swal from 'sweetalert2';
@@ -15,6 +15,9 @@ const BookingTime = () => {
   const [isSelecting, setIsSelecting] = useState(false);
   const [courtDetails, setCourtDetails] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const tableRef = useRef(null);
 
   useEffect(() => {
     fetchBookings();
@@ -79,6 +82,51 @@ const BookingTime = () => {
     if (!selection) return false;
     const slotTime = new Date(day.setHours(...time.split(':')));
     return isWithinInterval(slotTime, { start: selection.start, end: addHours(selection.end, 1) });
+  };
+
+  const handleTouchStart = (e, day, time) => {
+    if (checkIfSlotBooked(day, time)) return;
+    const touch = e.touches[0];
+    setTouchStart({ x: touch.clientX, y: touch.clientY, day, time });
+    handleSelectionStart(day, time);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchStart) return;
+    const touch = e.touches[0];
+    setTouchEnd({ x: touch.clientX, y: touch.clientY });
+
+    const { day, time } = getTouchedCell(touch.clientX, touch.clientY);
+    if (day && time) {
+      handleSelectionMove(day, time);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setTouchStart(null);
+    setTouchEnd(null);
+    handleSelectionEnd();
+  };
+
+  const getTouchedCell = (x, y) => {
+    if (!tableRef.current) return {};
+
+    const table = tableRef.current;
+    const rect = table.getBoundingClientRect();
+    const cells = table.querySelectorAll('td');
+
+    for (let cell of cells) {
+      const cellRect = cell.getBoundingClientRect();
+      if (
+        x >= cellRect.left && x <= cellRect.right &&
+        y >= cellRect.top && y <= cellRect.bottom
+      ) {
+        const [dateStr, time] = cell.dataset.cellInfo.split('|');
+        return { day: new Date(dateStr), time };
+      }
+    }
+
+    return {};
   };
 
   const calculateBookingDetails = () => {
@@ -168,6 +216,12 @@ const BookingTime = () => {
     }
   };
 
+  const checkIfSlotBooked = (day, time) => {
+    return bookings.some(
+      booking => isSameDay(new Date(booking.date), day) && booking.start_time === time
+    );
+  };
+
   const renderWeek = () => {
     const startDate = startOfWeek(currentWeek, { weekStartsOn: 1 });
     const endDate = endOfWeek(currentWeek, { weekStartsOn: 1 });
@@ -175,7 +229,7 @@ const BookingTime = () => {
 
     return (
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse select-none bg-white rounded-lg shadow-lg">
+      <table ref={tableRef} className="w-full border-collapse select-none bg-white rounded-lg shadow-lg">
           <thead>
             <tr className="bg-green-500 text-white">
               <th className="border p-2 sticky left-0 bg-green-500 z-10"></th>
@@ -188,37 +242,39 @@ const BookingTime = () => {
             </tr>
           </thead>
           <tbody>
-            {generateTimeSlots().map(time => (
-              <tr key={time}>
-                <td className="border p-2 sticky left-0 bg-white z-10 font-semibold">{time}</td>
-                {days.map(day => {
-                  const isBooked = bookings.some(
-                    booking => isSameDay(new Date(booking.date), day) && booking.start_time === time
-                  );
-                  const isSelected = isSlotSelected(day, time);
-                  return (
-                    <td
-                      key={`${format(day, 'yyyy-MM-dd')}-${time}`}
-                      className={`border p-2 ${
-                        isBooked ? 'bg-red-100 cursor-not-allowed' : 
-                        isSelected ? 'bg-green-100' : 'hover:bg-gray-100'
-                      } transition-all duration-200`}
-                      onMouseDown={() => !isBooked && handleSelectionStart(day, time)}
-                      onMouseEnter={() => !isBooked && handleSelectionMove(day, time)}
-                      onMouseUp={handleSelectionEnd}
-                    >
-                      {isBooked && <div className="text-xs text-red-600 font-semibold pointer-events-none">Booked</div>}
-                      {isSelected && renderBookingDetails(day, time)}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
+          {generateTimeSlots().map(time => (
+            <tr key={time}>
+              <td className="border p-2 sticky left-0 bg-white z-10 font-semibold">{time}</td>
+              {days.map(day => {
+                const isSlotBooked = checkIfSlotBooked(day, time);
+                const isSelected = isSlotSelected(day, time);
+                return (
+                  <td
+                    key={`${format(day, 'yyyy-MM-dd')}-${time}`}
+                    className={`border p-2 ${
+                      isSlotBooked ? 'bg-red-100 cursor-not-allowed' : 
+                      isSelected ? 'bg-green-100' : 'hover:bg-gray-100'
+                    } transition-all duration-200`}
+                    onMouseDown={() => !isSlotBooked && handleSelectionStart(day, time)}
+                    onMouseEnter={() => !isSlotBooked && handleSelectionMove(day, time)}
+                    onMouseUp={handleSelectionEnd}
+                    onTouchStart={(e) => handleTouchStart(e, day, time)}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    data-cell-info={`${format(day, 'yyyy-MM-dd')}|${time}`}
+                  >
+                    {isSlotBooked && <div className="text-xs text-red-600 font-semibold pointer-events-none">Booked</div>}
+                    {isSelected && renderBookingDetails(day, time)}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-100 min-h-screen">
@@ -260,15 +316,14 @@ const BookingTime = () => {
           </div>
           <button
             className="mt-6 bg-green-500 font-bold text-white px-6 py-3 rounded-lg hover:bg-green-600 disabled:bg-gray-400 transition-colors duration-200 w-full md:w-auto"
-            onClick={handleBookingSubmission}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Memproses...' : 'Pesan Sekarang'}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default BookingTime;
+            onClick={handleBookingSubmission}disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Memproses...' : 'Pesan Sekarang'}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  export default BookingTime;

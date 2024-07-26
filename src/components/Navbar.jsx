@@ -17,14 +17,14 @@ const Navbar = ({ openModal, isLoggedIn, handleLogout, user }) => {
     const handleScroll = () => {
       const scrolled = window.scrollY > 50;
       setIsScrolled(scrolled);
-
+  
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
+  
+      // Tampilkan tombol scroll-to-top saat user berada di bagian bawah halaman
       setShowScrollToTop(
-        documentHeight > windowHeight && 
-        scrollTop > 300
+        scrollTop + windowHeight >= documentHeight - 2800
       );
     };
 
@@ -101,9 +101,9 @@ const Navbar = ({ openModal, isLoggedIn, handleLogout, user }) => {
         z-50
       `}
       initial="normal"
-      animate={showScrollToTop ? "backToTop" : "normal"}
+      animate={showScrollToTop ? "backToTop" : "smooth"}
       variants={navbarVariants}
-      transition={{ duration: 0.5, ease: "easeInOut" }}
+      transition={{ duration: 0.1, ease: "easeInOut" }}
     >
       <AnimatePresence initial={false}>
         {showScrollToTop ? (
@@ -118,7 +118,7 @@ const Navbar = ({ openModal, isLoggedIn, handleLogout, user }) => {
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.1 }}
           >
             <FaArrowUp size={20} className="animate-bounce" />
           </motion.button>
@@ -128,8 +128,8 @@ const Navbar = ({ openModal, isLoggedIn, handleLogout, user }) => {
             className="flex justify-between items-center space-x-6 px-4 py-2"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.3 }}
+            exit={{ opacity: 0, scale: 0.1 }}
+            transition={{ duration: 0.1 }}
           >
             {!isMobile && (
               <RouterLink to="/" className={`text-xl font-bold ${isScrolled ? 'text-white' : 'text-green-800'}`}>
