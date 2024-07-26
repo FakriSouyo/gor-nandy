@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link as ScrollLink } from 'react-scroll';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { FaHome, FaBookOpen, FaInfoCircle, FaUser, FaSignInAlt, FaTachometerAlt, FaArrowUp } from 'react-icons/fa';
@@ -11,6 +11,7 @@ const Navbar = ({ openModal, isLoggedIn, handleLogout, user }) => {
   const isAdmin = user?.is_admin;
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const accountMenuRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,11 +32,20 @@ const Navbar = ({ openModal, isLoggedIn, handleLogout, user }) => {
       setIsMobile(window.innerWidth < 768);
     };
 
+    const handleClickOutside = (event) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target)) {
+        setShowAccountMenu(false);
+      }
+    };
+
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', handleResize);
+    document.addEventListener('mousedown', handleClickOutside);
+    
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
@@ -122,9 +132,9 @@ const Navbar = ({ openModal, isLoggedIn, handleLogout, user }) => {
             transition={{ duration: 0.3 }}
           >
             {!isMobile && (
-              <div className={`text-xl font-bold ${isScrolled ? 'text-white' : 'text-green-800'}`}>
+              <RouterLink to="/" className={`text-xl font-bold ${isScrolled ? 'text-white' : 'text-green-800'}`}>
                 <span className={isScrolled ? 'text-white' : 'text-black'}>Bad</span>Minton
-              </div>
+              </RouterLink>
             )}
             <nav className="flex items-center space-x-4 font-semibold">
               <NavLink to="home" icon={<FaHome size={20} />}>Beranda</NavLink>
@@ -149,7 +159,7 @@ const Navbar = ({ openModal, isLoggedIn, handleLogout, user }) => {
               )}
               <NavLink to="about" icon={<FaInfoCircle size={20} />}>Tentang</NavLink>
               {isLoggedIn ? (
-                <div className="relative">
+                <div className="relative" ref={accountMenuRef}>
                   <button
                     onClick={() => setShowAccountMenu(!showAccountMenu)}
                     className="bg-green-700 text-white px-4 py-2 rounded-full hover:bg-green-600 transition duration-300"
