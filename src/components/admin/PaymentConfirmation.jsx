@@ -24,7 +24,7 @@ const PaymentConfirmation = () => {
       
       if (error) throw error;
       
-      console.log('Fetched data:', data); // Log data untuk debugging
+      // console.log('Fetched data:', data); 
       
       setPayments(data || []);
     } catch (error) {
@@ -101,11 +101,10 @@ const PaymentConfirmation = () => {
   };
 
   const viewPaymentProof = (payment) => {
-    console.log('Payment object:', payment); // Log seluruh objek payment
-    
+    // console.log('Payment object:', payment); 
     const proofUrl = payment?.['payment_proof'];
     
-    console.log("Payment proof URL:", proofUrl); // Log URL untuk debugging
+    // console.log("Payment proof URL:", proofUrl); 
     
     if (proofUrl) {
       Swal.fire({

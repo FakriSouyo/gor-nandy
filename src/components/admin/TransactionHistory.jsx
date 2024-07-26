@@ -30,7 +30,7 @@ const TransactionHistory = () => {
     
       if (error) throw error;
       
-      console.log('Received transactions:', data);
+      // console.log('Received transactions:', data);
       
       setTransactions(data);
     } catch (error) {

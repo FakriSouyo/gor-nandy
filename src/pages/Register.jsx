@@ -25,7 +25,7 @@ const Register = ({ onClose, switchToLogin }) => {
         }
       });
       if (error) throw error;
-      console.log('User registered:', data.user);
+      // console.log('User registered:', data.user);
       Swal.fire({
         icon: 'success',
         title: 'Pendaftaran Berhasil',
@@ -47,7 +47,7 @@ const Register = ({ onClose, switchToLogin }) => {
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[url('/register-bg.png')] bg-cover bg-center">
+    <div className=" flex items-center justify-center bg-[url('/register-bg.png')] bg-cover bg-center">
       <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
         <h2 className="font-modak text-4xl text-green-700 mb-6 text-center">Daftar BadMinton</h2>
         <form onSubmit={handleRegister} className="space-y-4">

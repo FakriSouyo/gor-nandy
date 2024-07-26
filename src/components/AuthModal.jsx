@@ -6,7 +6,7 @@ import Register from '../pages/Register';
 const AuthModal = ({ isOpen, onClose, mode, switchMode, onLogin }) => {
   if (!isOpen) return null;
 
-  console.log("onLogin in AuthModal:", onLogin);
+  // console.log("onLogin in AuthModal:", onLogin);
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -19,7 +19,7 @@ const AuthModal = ({ isOpen, onClose, mode, switchMode, onLogin }) => {
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       onClick={handleOverlayClick}
     >
-      <div className=" p-8 rounded-lg shadow-xl w-full max-w-md">
+      <div className="  rounded-lg shadow-xl ">
         {mode === 'login' ? (
           <Login 
             onClose={onClose} 

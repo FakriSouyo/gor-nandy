@@ -40,8 +40,8 @@ const Login = ({ onClose, switchToRegister, onLogin }) => {
   if (loading) return <Loading />;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[url('/login-bg.png')] bg-cover bg-center">
-      <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+    <div className=" flex items-center justify-center bg-[url('/login-bg.png')] bg-cover bg-center">
+      <div className="bg-white p-8 rounded-lg shadow-xl  max-w-md">
         <h2 className="font-modak text-4xl text-green-700 mb-6 text-center">Masuk ke BadMinton</h2>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
