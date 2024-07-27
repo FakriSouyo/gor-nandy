@@ -71,11 +71,11 @@ const Schedule = () => {
     <motion.div 
       ref={ref}
       id="schedule" 
-      className="p-4 bg-contain bg-center min-h-screen pt-20" 
+      className="p-4 bg-cover bg-no-repeat bg-center min-h-screen pt-20" 
       style={{backgroundImage: "url('/b.png')"}}
       initial={{ opacity: 0 }}
       animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-      transition={{ duration: 0.8 }}
+      transition={{ duration: 0.1 }}
     >
       <motion.div 
         className="bg-opacity-90 p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-6xl mx-auto"
