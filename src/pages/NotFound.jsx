@@ -1,8 +1,14 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const NotFound = () => {
+  const location = useLocation();
+  if (location.pathname !== '/404') {
+    return <Navigate to="/404" replace />;
+  }
+
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-green-300 to-green-500 text-white p-4">
       <motion.div

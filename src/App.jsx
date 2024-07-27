@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Schedule from './pages/Schedule';
 import About from './pages/About';
@@ -15,14 +15,61 @@ import BookingConfirmation from './components/BookingConfirmation';
 import AdminDashboard from './components/admin/AdminDashboard';
 import NotFound from './pages/NotFound';
 
+function AppContent({ openModal, isLoggedIn, handleLogout, user, authModal, howToModal, closeModal, switchMode, handleLogin, updateUser }) {
+  const location = useLocation();
+  const showNavbar = location.pathname !== '/404';
+
+  return (
+    <>
+      {showNavbar && (
+        <Navbar 
+          openModal={openModal} 
+          isLoggedIn={isLoggedIn} 
+          handleLogout={handleLogout} 
+          user={user} 
+        />
+      )}
+      <Routes>
+        <Route path="/" element={
+          <>
+            <Home openModal={openModal} isLoggedIn={isLoggedIn} />
+            <Schedule />
+            <About />
+          </>
+        } />
+        <Route path="/booking" element={<Booking isLoggedIn={isLoggedIn} />} />
+        <Route path="/profile" element={<Profile user={user} updateUser={updateUser} />} />
+        <Route path="/booking-time/:courtId" element={<BookingTime />} />
+        <Route path="/booking-confirmation" element={<BookingConfirmation user={user} />} />
+        <Route 
+          path="/admin" 
+          element={
+            user?.is_admin
+              ? <AdminDashboard /> 
+              : <Navigate to="/" replace />
+          } 
+        />
+        <Route path="/404" element={<NotFound />} />
+        <Route path="*" element={<Navigate to="/404" replace />} />
+      </Routes>
+      <AuthModal 
+        isOpen={authModal.isOpen} 
+        onClose={closeModal} 
+        mode={authModal.mode}
+        switchMode={switchMode}
+        onLogin={handleLogin}
+      />
+      {howToModal && <HowTo onClose={closeModal} />}
+    </>
+  );
+}
+
 function App() {
   const [authModal, setAuthModal] = useState({ isOpen: false, mode: 'login' });
   const [howToModal, setHowToModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -82,7 +129,6 @@ function App() {
   };
 
   const handleLogin = (userData) => {
-    // console.log("Login handled in App.js", userData);
     setIsLoggedIn(true);
     setUser(userData);
     localStorage.setItem('isAdmin', userData.is_admin);
@@ -99,51 +145,30 @@ function App() {
   };
 
   const updateUser = (updatedUser) => {
-
     setUser({
       ...updatedUser,
       is_admin: updatedUser.user_metadata.is_admin || updatedUser.is_admin
     });
   };
+
+  if (loading) {
+    return <Loading />;
+  }
+
   return (
     <Router>
-      <Navbar 
+      <AppContent 
         openModal={openModal} 
         isLoggedIn={isLoggedIn} 
         handleLogout={handleLogout} 
-        user={user} 
-      />
-      <Routes>
-        <Route path="/" element={
-          <>
-            <Home openModal={openModal} isLoggedIn={isLoggedIn} />
-            <Schedule />
-            <About />
-          </>
-        } />
-        <Route path="/booking" element={<Booking isLoggedIn={isLoggedIn} />} />
-        <Route path="/profile" element={<Profile user={user} updateUser={updateUser} />} />
-        <Route path="/booking-time/:courtId" element={<BookingTime />} />
-        <Route path="/booking-confirmation" element={<BookingConfirmation user={user} />} />
-        <Route 
-          path="/admin" 
-          element={
-            user?.is_admin
-              ? <AdminDashboard /> 
-              : <Navigate to="/" replace />
-          } 
-        />
-       
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <AuthModal 
-        isOpen={authModal.isOpen} 
-        onClose={closeModal} 
-        mode={authModal.mode}
+        user={user}
+        authModal={authModal}
+        howToModal={howToModal}
+        closeModal={closeModal}
         switchMode={switchMode}
-        onLogin={handleLogin}
+        handleLogin={handleLogin}
+        updateUser={updateUser}
       />
-      {howToModal && <HowTo onClose={closeModal} />}
     </Router>
   );
 }
